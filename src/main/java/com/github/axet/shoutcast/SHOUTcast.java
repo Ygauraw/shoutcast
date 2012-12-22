@@ -22,15 +22,23 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.github.axet.wget.Direct;
+import com.github.axet.wget.RetryWrap;
 import com.github.axet.wget.WGet;
 import com.github.axet.wget.info.ex.DownloadError;
 
 public class SHOUTcast {
 
+    enum States {
+        EXTRACTING_MAIN, EXTRACTING_SUB, RETRY
+    }
+
+    private States state;
+    private int delay;
+    private Throwable e;
+
     ArrayList<SHOUTgenre> list = new ArrayList<SHOUTgenre>();
 
     public SHOUTcast() {
-
     }
 
     public void extract() {
@@ -52,6 +60,12 @@ public class SHOUTcast {
         }
     }
 
+    void setRetry(int delay, Throwable e) {
+        this.setState(States.RETRY);
+        this.setDelay(delay);
+        this.setE(e);
+    }
+
     List<SHOUTparent> extractGenres(final AtomicBoolean stop, final Runnable notify) {
         try {
             URL url = new URL("http://www.shoutcast.com/");
@@ -59,16 +73,19 @@ public class SHOUTcast {
             String html = WGet.getHtml(url, new WGet.HtmlLoader() {
                 @Override
                 public void notifyRetry(int delay, Throwable e) {
+                    setRetry(delay, e);
                     notify.run();
                 }
 
                 @Override
                 public void notifyMoved() {
+                    setState(States.RETRY);
                     notify.run();
                 }
 
                 @Override
                 public void notifyDownloading() {
+                    setState(States.EXTRACTING_MAIN);
                     notify.run();
                 }
             }, stop);
@@ -104,35 +121,52 @@ public class SHOUTcast {
         }
     }
 
-    List<SHOUTgenre> extractGenres(SHOUTparent g, final AtomicBoolean stop, final Runnable notify) {
+    List<SHOUTgenre> extractGenres(final SHOUTparent g, final AtomicBoolean stop, final Runnable notify) {
         try {
-            URL url = g.getURL();
+            String html = RetryWrap.wrap(stop, new RetryWrap.WrapReturn<String>() {
+                URL u = g.getURL();
 
-            String html = "";
-
-            HttpClient client = new DefaultHttpClient();
-            HttpPost post = new HttpPost("http://www.shoutcast.com/genre.jsp");
-            try {
-                post.setHeader("Referer", url.toString());
-                post.setHeader("Origin", "http://www.shoutcast.com");
-                post.setHeader("User-Agent", Direct.USER_AGENT);
-                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-                nameValuePairs.add(new BasicNameValuePair("genre", g.getName()));
-                nameValuePairs.add(new BasicNameValuePair("id", g.getId().toString()));
-                post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-                HttpResponse response = client.execute(post);
-                BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-                String line = "";
-                while ((line = rd.readLine()) != null) {
-                    html += line;
+                @Override
+                public void retry(int delay, Throwable e) {
+                    setRetry(delay, e);
+                    notify.run();
                 }
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+                @Override
+                public void moved(URL url) {
+                    setState(States.RETRY);
+                    u = url;
+                    notify.run();
+                }
 
-            Document doc = Jsoup.parse(html, url.toString());
+                @Override
+                public String download() throws IOException {
+                    setState(States.EXTRACTING_MAIN);
+                    notify.run();
+
+                    HttpPost post = new HttpPost("http://www.shoutcast.com/genre.jsp");
+
+                    String html = "";
+
+                    HttpClient client = new DefaultHttpClient();
+                    post.setHeader("Referer", u.toString());
+                    post.setHeader("User-Agent", Direct.USER_AGENT);
+                    List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
+                    nameValuePairs.add(new BasicNameValuePair("genre", g.getName()));
+                    nameValuePairs.add(new BasicNameValuePair("id", g.getId().toString()));
+                    post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                    HttpResponse response = client.execute(post);
+                    BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+                    String line = "";
+                    while ((line = rd.readLine()) != null) {
+                        html += line;
+                    }
+                    return html;
+                }
+            });
+
+            Document doc = Jsoup.parse(html, g.getURL().toString());
             Elements liRadioPickers = doc.select("li[class=secgen]");
 
             ArrayList<SHOUTgenre> list = new ArrayList<SHOUTgenre>();
@@ -157,6 +191,30 @@ public class SHOUTcast {
 
     public List<SHOUTgenre> getGenres() {
         return list;
+    }
+
+    synchronized public States getState() {
+        return state;
+    }
+
+    synchronized public void setState(States state) {
+        this.state = state;
+    }
+
+    synchronized public int getDelay() {
+        return delay;
+    }
+
+    synchronized public void setDelay(int delay) {
+        this.delay = delay;
+    }
+
+    synchronized public Throwable getE() {
+        return e;
+    }
+
+    synchronized public void setE(Throwable e) {
+        this.e = e;
     }
 
 }
