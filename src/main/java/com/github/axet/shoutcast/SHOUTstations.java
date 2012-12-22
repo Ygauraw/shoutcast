@@ -4,25 +4,34 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.github.axet.wget.Direct;
-import com.github.axet.wget.WGet;
 import com.github.axet.wget.info.ex.DownloadError;
 
 public class SHOUTstations {
@@ -41,37 +50,53 @@ public class SHOUTstations {
         });
     }
 
+    public static URI toURI(URL url) {
+        try {
+            return new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(),
+                    url.getQuery(), url.getRef());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void extract(SHOUTgenre g, AtomicBoolean stop, final Runnable notify) {
         list.clear();
 
         URL url = g.getURL();
 
-        String html = WGet.getHtml(url, new WGet.HtmlLoader() {
-            @Override
-            public void notifyRetry(int delay, Throwable e) {
-                notify.run();
-            }
+        String html;
 
-            @Override
-            public void notifyMoved() {
-                notify.run();
-            }
+        CookieStore store = new BasicCookieStore();
+        HttpContext httpContext = new BasicHttpContext();
+        httpContext.setAttribute(ClientContext.COOKIE_STORE, store);
 
-            @Override
-            public void notifyDownloading() {
-                notify.run();
+        HttpClient client = new DefaultHttpClient();
+
+        try {
+            html = "";
+            HttpGet get = new HttpGet(toURI(url));
+            get.setHeader("Referer", url.toString());
+            get.setHeader("User-Agent", Direct.USER_AGENT);
+
+            HttpResponse response = client.execute(get, httpContext);
+            BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+            String line = "";
+            while ((line = rd.readLine()) != null) {
+                html += line;
             }
-        }, stop);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         int max = extract(g, html, url);
-        while (list.size() <= max) {
-            HttpClient client = new DefaultHttpClient();
-            HttpPost post = new HttpPost(url.toString());
+        while (list.size() < max) {
             try {
                 html = "";
+                URI u = toURI(new URL(String.format("http://www.shoutcast.com/genre-ajax/%s", g.getName())));
+                HttpPost post = new HttpPost(u);
                 post.setHeader("Referer", url.toString());
-                post.setHeader("Origin", "http://www.shoutcast.com");
                 post.setHeader("User-Agent", Direct.USER_AGENT);
+                post.setHeader("X-Requested-With", "XMLHttpRequest");
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
                 nameValuePairs.add(new BasicNameValuePair("strIndex", Integer.toString(list.size())));
                 nameValuePairs.add(new BasicNameValuePair("count", "10"));
@@ -80,7 +105,7 @@ public class SHOUTstations {
                 nameValuePairs.add(new BasicNameValuePair("order", "desc"));
                 post.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
-                HttpResponse response = client.execute(post);
+                HttpResponse response = client.execute(post, httpContext);
                 BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
                 String line = "";
                 while ((line = rd.readLine()) != null) {
