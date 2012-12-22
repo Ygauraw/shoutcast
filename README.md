@@ -1,0 +1,3 @@
+# shoutcast
+
+SHOUTcast download library
