@@ -37,8 +37,8 @@ public class SHOUTstations {
 
     ArrayList<SHOUTstation> list = new ArrayList<SHOUTstation>();
 
-    enum States {
-        RETRY, EXTRACT
+    public enum States {
+        RETRY, EXTRACT, DONE
     };
 
     private int delay;
@@ -47,7 +47,7 @@ public class SHOUTstations {
     private States state;
 
     public SHOUTstations() {
-
+        state = States.DONE;
     }
 
     void setRetry(int delay, Throwable e) {
@@ -180,6 +180,8 @@ public class SHOUTstations {
             setMaxItems(extract(g, html, url));
         }
 
+        setState(States.DONE);
+        notify.run();
     }
 
     int extract(SHOUTgenre g, String html, URL url) {
