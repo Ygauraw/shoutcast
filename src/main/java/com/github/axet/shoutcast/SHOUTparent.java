@@ -2,6 +2,9 @@ package com.github.axet.shoutcast;
 
 import java.net.URL;
 
+import com.thoughtworks.xstream.annotations.XStreamAlias;
+
+@XStreamAlias("SHOUTparent")
 public class SHOUTparent {
 
     URL url;
