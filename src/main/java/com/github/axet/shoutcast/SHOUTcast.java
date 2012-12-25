@@ -28,11 +28,22 @@ import com.github.axet.wget.info.ex.DownloadError;
 
 public class SHOUTcast {
 
-    enum States {
-        EXTRACTING_MAIN, EXTRACTING_SUB, RETRY
+    public enum States {
+
+        // downoading main genres (main page)
+        EXTRACTING_MAIN,
+
+        // downlading sub genre (main + click)
+        EXTRACTING_SUB,
+
+        // IO error, retyring
+        RETRY,
+
+        // all done
+        DONE
     }
 
-    private States state;
+    private States state = States.DONE;
     private int delay;
     private Throwable e;
 
@@ -58,6 +69,8 @@ public class SHOUTcast {
             List<SHOUTgenre> sub = extractGenres(g, stop, notify);
             this.list.addAll(sub);
         }
+
+        setState(States.DONE);
     }
 
     void setRetry(int delay, Throwable e) {
@@ -141,7 +154,7 @@ public class SHOUTcast {
 
                 @Override
                 public String download() throws IOException {
-                    setState(States.EXTRACTING_MAIN);
+                    setState(States.EXTRACTING_SUB);
                     notify.run();
 
                     HttpPost post = new HttpPost("http://www.shoutcast.com/genre.jsp");
