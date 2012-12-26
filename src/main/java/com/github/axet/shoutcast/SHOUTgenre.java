@@ -28,4 +28,8 @@ public class SHOUTgenre {
     public String getName() {
         return name;
     }
+
+    public boolean equals(Object o) {
+        return url.equals(((SHOUTgenre) o).getURL());
+    }
 }
