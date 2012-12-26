@@ -12,8 +12,7 @@ public class SHOUTstation {
     Long bitrate;
     String format;
 
-    public SHOUTstation(SHOUTgenre sup, URL url, String name, String id, Long listeners, Long bitrate,
-            String format) {
+    public SHOUTstation(SHOUTgenre sup, URL url, String name, String id, Long listeners, Long bitrate, String format) {
         this.parent = sup;
         this.url = url;
         this.name = name;
@@ -33,5 +32,17 @@ public class SHOUTstation {
 
     public String getName() {
         return name;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public Long getBirtate() {
+        return bitrate;
+    }
+
+    public Long getListeners() {
+        return listeners;
     }
 }
