@@ -4,7 +4,7 @@
   <groupId>com.github.axet</groupId>
   <artifactId>shoutcast</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.4</version>
+  <version>0.0.5</version>
   <name>shoutcast</name>
   <description>shoutcast download library</description>
   <url>https://github.com/axet/shoutcast</url>

@@ -28,4 +28,9 @@ public class SHOUTgenre {
     public String getName() {
         return name;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return url.equals(((SHOUTgenre) o).getURL());
+    }
 }
