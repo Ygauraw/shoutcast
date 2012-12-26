@@ -38,7 +38,7 @@ public class SHOUTstation {
         return format;
     }
 
-    public Long getBirtate() {
+    public Long getBitrate() {
         return bitrate;
     }
 
