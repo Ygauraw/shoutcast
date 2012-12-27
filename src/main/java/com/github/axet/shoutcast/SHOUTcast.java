@@ -16,6 +16,7 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.CoreConnectionPNames;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -162,6 +163,10 @@ public class SHOUTcast {
                     String html = "";
 
                     HttpClient client = new DefaultHttpClient();
+
+                    client.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, Direct.CONNECT_TIMEOUT);
+                    client.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, Direct.READ_TIMEOUT);
+
                     post.setHeader("Referer", u.toString());
                     post.setHeader("User-Agent", Direct.USER_AGENT);
                     List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
