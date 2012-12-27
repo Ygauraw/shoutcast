@@ -22,6 +22,7 @@ import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.jsoup.Jsoup;
@@ -82,6 +83,9 @@ public class SHOUTstations {
         httpContext.setAttribute(ClientContext.COOKIE_STORE, store);
 
         final HttpClient client = new DefaultHttpClient();
+
+        client.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, Direct.CONNECT_TIMEOUT);
+        client.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, Direct.READ_TIMEOUT);
 
         String html = RetryWrap.wrap(stop, new RetryWrap.WrapReturn<String>() {
             URL u = g.getURL();
