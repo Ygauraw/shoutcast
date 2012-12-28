@@ -4,8 +4,8 @@ SHOUTcast download library
 
 # Central Maven Repo
 
-  <dependency>
-    <groupId>com.github.axet</groupId>
-    <artifactId>shoutcast</artifactId>
-    <version>0.0.6</version>
-  </dependency>
+    <dependency>
+      <groupId>com.github.axet</groupId>
+      <artifactId>shoutcast</artifactId>
+      <version>0.0.6</version>
+    </dependency>
