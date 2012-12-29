@@ -45,4 +45,9 @@ public class SHOUTstation {
     public Long getListeners() {
         return listeners;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return url.equals(((SHOUTstation) o).getURL());
+    }
 }
