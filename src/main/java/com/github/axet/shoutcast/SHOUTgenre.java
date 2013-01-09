@@ -11,6 +11,10 @@ public class SHOUTgenre {
     String name;
     SHOUTparent parent;
 
+    public SHOUTgenre(URL url) {
+        this.url = url;
+    }
+
     public SHOUTgenre(SHOUTparent sup, URL url, String name) {
         this.parent = sup;
         this.url = url;
