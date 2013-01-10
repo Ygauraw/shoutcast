@@ -196,7 +196,7 @@ public class SHOUTcast {
                 String href = a.attr("abs:href");
                 String name = a.text();
                 if (href != null && !href.isEmpty())
-                    list.add(new SHOUTgenre(g, new URL(href), name));
+                    list.add(new SHOUTgenre(g,new URL(href), name));
                 else
                     throw new DownloadError("bad href rss " + href);
             }
