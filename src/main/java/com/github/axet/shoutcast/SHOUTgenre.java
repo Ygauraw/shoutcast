@@ -7,12 +7,15 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 @XStreamAlias("SHOUTgenre")
 public class SHOUTgenre {
 
+    // url requred for initial loading
     URL url;
+    // name requred for continius loading
     String name;
     SHOUTparent parent;
 
-    public SHOUTgenre(URL url) {
+    public SHOUTgenre(URL url, String name) {
         this.url = url;
+        this.name = name;
     }
 
     public SHOUTgenre(SHOUTparent sup, URL url, String name) {
