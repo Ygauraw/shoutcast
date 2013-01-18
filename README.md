@@ -7,5 +7,5 @@ SHOUTcast download library
     <dependency>
       <groupId>com.github.axet</groupId>
       <artifactId>shoutcast</artifactId>
-      <version>0.0.7</version>
+      <version>0.0.10</version>
     </dependency>
